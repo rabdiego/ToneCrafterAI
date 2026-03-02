@@ -15,7 +15,7 @@ The project adopts a microservices architecture (FastAPI + Streamlit) and uses *
 5. **Setup Crafter (The Brain):** Executes RAG on the user's equipment manual (via ChromaDB + HuggingFace Embeddings), cross-referencing the generic intent with the actual available effects.
 6. **Synthesizer:** Drafts the final humanized response, justifying the choices made for the generated patch.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Agent Orchestration:** LangChain & LangGraph
 * **Native Models:** Google Gemini 2.5 Pro & Flash
@@ -24,7 +24,7 @@ The project adopts a microservices architecture (FastAPI + Streamlit) and uses *
 * **Backend:** FastAPI, Uvicorn (Asynchronous REST Architecture)
 * **Frontend:** Streamlit
 
-## 🚀 How to Run Locally
+## How to Run Locally
 
 ### Prerequisites
 * Python 3.10+
