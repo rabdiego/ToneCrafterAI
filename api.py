@@ -12,29 +12,32 @@ app_state = {}
 async def lifespan(app: FastAPI):
     print("🚀 [FastAPI] Iniciando os motores da IA e carregando o RAG...")
     app_state["graph"] = ToneCrafterGraph()
-    print("✅ [FastAPI] Sistema ToneCrafter pronto para receber requisições!")
+    print("✅ [FastAPI] Sistema ToneCrafter pronto!")
     yield
     app_state.clear()
-
 
 app = FastAPI(title="ToneCrafter AI API", lifespan=lifespan)
 
 class TextQuery(BaseModel):
     query: str
-
+    thread_id: str = "sessao_padrao"
 
 @app.post("/api/chat/text")
 async def chat_text(request: TextQuery):
     try:
         graph: ToneCrafterGraph = app_state["graph"]
-        resposta = graph.process(user_input=request.query, is_audio=False)
+        resposta = graph.process(text_input=request.query, thread_id=request.thread_id)
         return {"response": resposta}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/chat/audio")
-async def chat_audio(file: UploadFile = File(...)):
+async def chat_audio(
+    file: UploadFile = File(...), 
+    query: str = Form(""),
+    thread_id: str = Form("sessao_padrao")
+):
     try:
         temp_dir = "temp_uploads"
         os.makedirs(temp_dir, exist_ok=True)
@@ -44,10 +47,10 @@ async def chat_audio(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
             
         graph: ToneCrafterGraph = app_state["graph"]
-        resposta = graph.process(user_input=temp_file_path, is_audio=True)
+        
+        resposta = graph.process(text_input=query, audio_path=temp_file_path, thread_id=thread_id)
         
         os.remove(temp_file_path)
-        
         return {"response": resposta}
         
     except Exception as e:

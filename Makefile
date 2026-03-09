@@ -11,4 +11,4 @@ run:
 		sleep 2; \
 	done; \
 	echo "✅ API 100% pronta! Subindo a interface visual..."; \
-	uv run streamlit run app.py
+	uv run streamlit run app.py --server.headless true

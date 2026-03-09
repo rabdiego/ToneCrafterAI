@@ -5,6 +5,10 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: SecretStr
     LLAMA_CLOUD_API_KEY: SecretStr
     TAVILY_API_KEY: SecretStr
+    LANGCHAIN_API_KEY: SecretStr
+
+    LANGCHAIN_TRACING_V2: str
+    LANGCHAIN_PROJECT: str
 
     EMBEDDINGS_MODEL: str
     AUDIO_EXTRACTOR_LLM_MODEL_NAME: str
