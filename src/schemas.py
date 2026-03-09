@@ -42,6 +42,12 @@ class RouterDecision(BaseModel):
     contextualized_query: str = Field(
         description="A reescrita da mensagem atual para que faça sentido absoluto isoladamente. Se for um pedido de TWEAK, inclua na reescrita a instrução para basear-se no patch atual."
     )
+    optimized_search_query: Optional[str] = Field(
+        description="Query super enxuta e rica em palavras-chave para busca web. Ex: em vez de 'Qual pedal o Nirvana usava em Smells Like Teen Spirit', use 'Nirvana Smells Like Teen Spirit guitar pedals'. Retorne vazio se não aplicável."
+    )
+    audio_instructions: Optional[str] = Field(
+        description="Instrução técnica e direta e curta para o extrator de áudio. Ex: 'Focar na guitarra base', 'Isolar o solo'. Retorne vazio se não aplicável."
+    )
 
 
 class GraphState(TypedDict):
@@ -55,4 +61,6 @@ class GraphState(TypedDict):
     patch: Optional[any]
     agent_context: Optional[str]
     final_response: Optional[str]
+    optimized_search_query: Optional[str]
+    audio_instructions: Optional[str]
 

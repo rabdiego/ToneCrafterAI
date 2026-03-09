@@ -29,7 +29,7 @@ class AudioExtractorAgent:
             return base64.b64encode(audio_data).decode("utf-8")
 
 
-    def analyze_audio(self, audio_path: str) -> ToneBlueprint:
+    def analyze_audio(self, audio_path: str, user_instructions: str = None) -> ToneBlueprint:
         print(f"🎧 [Audio Extractor] Analisando o arquivo: {audio_path}...")
         
         base64_audio = self._encode_audio_to_base64(audio_path)
@@ -48,6 +48,9 @@ class AudioExtractorAgent:
             "As categorias amplifier e cabinet SEMPRE estarão ativas. "
             "Nas categorias de Modulation, teremos Chorus, Phaser, Pitch shifter, etc."
         )
+
+        if user_instructions:
+            prompt_text += f"\n\nATENÇÃO ÀS INSTRUÇÕES ESPECÍFICAS DO USUÁRIO:\n'{user_instructions}'"
 
         message = HumanMessage(
             content=[

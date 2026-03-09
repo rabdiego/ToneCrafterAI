@@ -16,11 +16,13 @@ async def lifespan(app: FastAPI):
     yield
     app_state.clear()
 
+
 app = FastAPI(title="ToneCrafter AI API", lifespan=lifespan)
 
 class TextQuery(BaseModel):
     query: str
     thread_id: str = "sessao_padrao"
+
 
 @app.post("/api/chat/text")
 async def chat_text(request: TextQuery):

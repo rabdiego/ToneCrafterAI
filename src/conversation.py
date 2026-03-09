@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
@@ -81,8 +81,16 @@ class ToneCrafterGraph:
             route_str = "audio" if (decision.intent.value == "create" and has_audio and decision.sub_route.value == "audio") else decision.sub_route.value if decision.intent.value == "create" else decision.intent.value
             query_limpa = decision.contextualized_query
             
-            print(f"🔄 Consulta Traduzida: '{query_limpa}'\n🔀 Rota Decidida: [{route_str.upper()}]")
-            return {"route": route_str, "clean_query": query_limpa}
+            print(f"🔄 Consulta Traduzida: '{query_limpa}'")
+            print(f"🔍 Busca Otimizada: '{decision.optimized_search_query}'")
+            print(f"🎛️ Instrução de Áudio: '{decision.audio_instructions}'")
+            
+            return {
+                "route": route_str, 
+                "clean_query": query_limpa,
+                "optimized_search_query": decision.optimized_search_query,
+                "audio_instructions": decision.audio_instructions
+            }
 
 
         def qa_node(state: GraphState):
@@ -90,10 +98,24 @@ class ToneCrafterGraph:
             
             @tool
             def buscar_manual(query: str) -> str:
-                """Busca efeitos no manual da pedaleira."""
+                """
+                Busca efeitos no manual da pedaleira (RAG).
+                REGRA CRÍTICA DE USO: A 'query' DEVE ser extremamente curta, contendo APENAS palavras-chave técnicas em inglês. NUNCA use frases completas.
+                CERTO: 'Pitch Shifter', 'Noise Gate threshold', 'Tube Screamer distortion'.
+                ERRADO: 'Como eu faço para mudar a afinação', 'Qual efeito simula o Tube Screamer'.
+                """
                 return self.rag_system.search_effect_parameters(query=query, k=3)
                 
-            tavily_tool = TavilySearch(max_results=3, name="web_search", description="Descubra equipamentos de bandas na web.")
+            tavily_tool = TavilySearch(
+                max_results=3, 
+                name="web_search", 
+                description="""
+                Descubra equipamentos de bandas na web.
+                REGRA CRÍTICA DE USO: Use apenas palavras-chave diretas e nomes próprios. Nenhuma palavra de ligação.
+                CERTO: 'Red Hot Chili Peppers Can't Stop guitar pedals'.
+                ERRADO: 'Quais pedais o Red Hot Chili Peppers usa na música Can't Stop'.
+                """
+            )
             
             ferramentas_qa = [buscar_manual, tavily_tool]
             
@@ -117,7 +139,8 @@ class ToneCrafterGraph:
 
         def web_node(state: GraphState):
             print("🌐 [Nó: Web Searcher] Acionado.")
-            return {"blueprint": self.web_worker.search_and_craft(state["clean_query"])}
+            query = state.get("optimized_search_query") or state["clean_query"]
+            return {"blueprint": self.web_worker.search_and_craft(query)}
 
 
         def mockup_node(state: GraphState):
@@ -127,8 +150,11 @@ class ToneCrafterGraph:
 
         def audio_node(state: GraphState):
             print("🎧 [Nó: Audio Extractor] Acionado.")
-            query = state.get("audio_path") if state.get("audio_path") else state["clean_query"]
-            return {"blueprint": self.audio_worker.analyze_audio(query)}
+            audio_path = state["audio_path"]
+            if not audio_path:
+                return {"blueprint": None}
+            user_instructions = state.get("audio_instructions") or "Extraia o timbre de guitarra deste áudio."
+            return {"blueprint": self.audio_worker.analyze_audio(audio_path, user_instructions)}
 
 
         def crafter_node(state: GraphState):
@@ -144,8 +170,14 @@ class ToneCrafterGraph:
             route = state.get("route")
             
             system_base = (
-                "Você é o ToneCrafter AI, um Guitar Tech virtual incrivelmente capaz e amigável. "
-                "Sua missão é dar a resposta final ao usuário de forma humanizada, usando Markdown elegante (negritos e listas)."
+                "Você é o ToneCrafter AI, um Guitar Tech virtual. "
+                "Você receberá queries do usuário, e terá que respondê-lo de forma amigável e direta, sem ser infantil, mantendo um leve tom de seriedade."
+                "Você receberá como contexto o histórico das mensagens, além do retorno de outros agentes especializados auxiliares para satisfazer o cliente."
+                "Você é um agente conversacional, que pode além de conversar com o usuário, também responder dúvidas sobre guitar gear, além dos efeitos específicos da pedaleira do usuário."
+                "Além disso, você também retornará, de forma limpa e concisa (usando markdown), as configurações para o preset da pedaleira do usuário, quando ele pedir para montar um."
+                "No caso da montagem de presets, retorne uma lista com o nome do efeito na pedaleira, uma breve explicação de porque utilizá-lo, e as configurações do efeito."
+                "Esses outros agentes auxiliares cuidarão de tarefas que não estão no seu alcance, como extrair informação de áudios, montar presets para a pedaleira buscando no manual de instruções do usuário, etc."
+                "Utilize SEMPRE o retorno desses agentes auxiliares na sua resposta. Seu papel é manter a coerência entre as respostas para o usuário."
             )
             
             blueprint_str = state["blueprint"].model_dump_json() if state.get("blueprint") else "N/A"
@@ -160,12 +192,16 @@ class ToneCrafterGraph:
 
             responder_prompt = ChatPromptTemplate.from_messages([
                 ("system", "{system_base}\n\nCONTEXTO DA AÇÃO ATUAL:\n{contexto_injetado}"),
+                MessagesPlaceholder(variable_name="chat_history"),
                 ("human", "Aja de acordo com o contexto e responda ao pedido original: {pedido}")
             ])
+
+            historico = state["messages"][:-1] if "messages" in state else []
             
             response = (responder_prompt | self.llm_flash).invoke({
                 "system_base": system_base,
                 "contexto_injetado": contexto_injetado,
+                "chat_history": historico,
                 "pedido": state["clean_query"]
             })
             
@@ -213,7 +249,7 @@ class ToneCrafterGraph:
         is_audio = bool(audio_path)
         
         if is_audio and text_input:
-            msg_content = f"[Arquivo de Áudio Anexado] {text_input}"
+            msg_content = f"[Arquivo de Áudio Anexado] {audio_path}"
         elif is_audio:
             msg_content = "[Arquivo de Áudio Anexado] Gere um patch baseado neste áudio."
             text_input = "Gere um patch baseado neste áudio."
