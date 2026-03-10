@@ -64,3 +64,8 @@ class GraphState(TypedDict):
     optimized_search_query: Optional[str]
     audio_instructions: Optional[str]
 
+
+class GuardrailDecision(BaseModel):
+    is_allowed: bool = Field(description="True se for permitido, False se for proibido.")
+    block_message: str = Field(description="Se bloqueado, uma resposta direta e simples, não infantil, explicando o motivo.")
+
