@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import json
 
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
@@ -148,6 +149,40 @@ class ToneCrafterGraph:
         config = {'configurable': {'thread_id': thread_id}}
         final_state = self.app.invoke(initial_state, config=config)
         return final_state["final_response"]
+    
+
+    def process_stream(self, text_input: str = "", audio_path: str = None, thread_id: str = "sessao_padrao"):
+        is_audio = bool(audio_path)
+        
+        msg_content = f"[Arquivo de Áudio Anexado] {text_input}" if is_audio and text_input else "[Arquivo de Áudio Anexado] Gere um patch." if is_audio else text_input
+            
+        initial_state = {
+            "messages": [HumanMessage(content=msg_content)],
+            "user_input": text_input,
+            "audio_path": audio_path,
+            "is_audio": is_audio
+        }
+
+        config = {'configurable': {'thread_id': thread_id}}
+        
+        mensagens_status = {
+            "guardrail": "🛡️ Verificando segurança da requisição...",
+            "router": "🧭 Analisando intenção e roteando...",
+            "qa_node": "📚 Consultando manuais e varrendo a web...",
+            "web_worker": "🌐 Consultando informações da web...",
+            "mockup_worker": "🎛️ Desenhando as características do preset...",
+            "audio_worker": "🎧 Ouvindo o áudio e mapeando frequências...",
+            "setup_crafter": "🔌 Conectando e regulando os pedais virtuais...",
+            "unified_responder": "🗣️ Formulando a resposta final..."
+        }
+
+        for event in self.app.stream(initial_state, config=config, stream_mode="updates"):
+            for node_name in event.keys():
+                if node_name in mensagens_status:
+                    yield json.dumps({"type": "status", "content": mensagens_status[node_name]}) + "\n"
+
+        final_state = self.app.get_state(config).values
+        yield json.dumps({"type": "final", "content": final_state["final_response"]}) + "\n"
 
 
 if __name__ == "__main__":
