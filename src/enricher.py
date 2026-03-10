@@ -42,12 +42,15 @@ class PedalEnricherAgent:
         )
 
     
-    async def aenrich_profile(self, pedal_name: str, description: str, category: str) -> str:
+    async def aenrich_profile(
+        self,
+        pedal_name: str,
+        description: str,
+        category: str
+    ) -> str:
         utility_categories = ["Noise Reduction", "Equalizer", "Cabinet"]
         if category in utility_categories:
             return "Utility effect. Modifies dynamics or frequencies without adding organic saturation."
-
-        print(f"🔍 [Enricher] Buscando perfil para: {pedal_name}...")
         
         try:
             response = await self.agent_executor.ainvoke({
@@ -60,12 +63,15 @@ class PedalEnricherAgent:
             return "Perfil sonoro genérico baseado no manual."
     
 
-    def enrich_profile(self, pedal_name: str, description: str, category: str) -> str:
+    def enrich_profile(
+        self,
+        pedal_name: str,
+        description: str,
+        category: str
+    ) -> str:
         utility_categories = ["Noise Reduction", "Equalizer", "Cabinet"]
         if category in utility_categories:
             return "Utility effect. Modifies dynamics or frequencies without adding organic saturation."
-
-        print(f"🔍 [Enricher] Buscando perfil para: {pedal_name}...")
         
         try:
             response = self.agent_executor.invoke({

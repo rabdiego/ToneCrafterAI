@@ -34,9 +34,11 @@ class PedalSetupCrafterAgent:
         
         self.chain = self.prompt | self.structured_llm
 
-    def craft_setup(self, blueprint: ToneBlueprint, rag_system: PedalboardRAG):
-        print(f"\n🧠 [Setup Crafter] Iniciando mapeamento...")
-        
+    def craft_setup(
+        self, 
+        blueprint: ToneBlueprint,
+        rag_system: PedalboardRAG
+    ):
         rag_context_accumulated = ""
         requested_effects_str = ""
         
@@ -55,8 +57,6 @@ class PedalSetupCrafterAgent:
                 resultados = rag_system.search_effect_parameters(query=query_para_rag, k=3)
                 rag_context_accumulated += f"\n>> OPÇÕES NO MANUAL PARA {categoria.upper()}:\n{resultados}\n"
         
-        print(f"⚙️ [Setup Crafter] Contexto reunido. Gerando o Patch final...")
-        
         try:
             patch_final = self.chain.invoke({
                 "overall_vibe": blueprint.overall_vibe,
@@ -66,6 +66,5 @@ class PedalSetupCrafterAgent:
             return patch_final
             
         except Exception as e:
-            print(f"⚠️ Erro ao gerar o Patch Final: {e}")
             raise e
 

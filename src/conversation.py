@@ -1,4 +1,3 @@
-import os
 from dotenv import load_dotenv
 import json
 
@@ -38,28 +37,28 @@ class ToneCrafterGraph:
         workflow = StateGraph(GraphState)
 
         def router_node(state: GraphState):
-            print("🧭 [Nó: Roteador] Lendo histórico e reescrevendo a consulta...")
+            print("[Roter Node] Reading chat history and rewriting query...")
             return self.router_worker.route_request(state)
 
 
         def qa_node(state: GraphState):
-            print(f"📚 [Nó: QA] Coletando dados brutos para: '{state['clean_query']}'...")
+            print(f"[QA Node]: Collecting data for query '{state['clean_query']}'...")
             return self.qa_worker.process_qa(state, self.rag_system, self.audio_worker)
 
 
         def web_node(state: GraphState):
-            print("🌐 [Nó: Web Searcher] Acionado.")
+            print("[Web Searcher Node] Activated.")
             query = state.get("optimized_search_query") or state["clean_query"]
             return {"blueprint": self.web_worker.search_and_craft(query)}
 
 
         def mockup_node(state: GraphState):
-            print("📝 [Nó: Mockup Crafter] Acionado.")
+            print("[Mockup Crafter Node] Activated.")
             return {"blueprint": self.mockup_worker.craft_mockup(state["clean_query"])}
 
 
         def audio_node(state: GraphState):
-            print("🎧 [Nó: Audio Extractor] Acionado.")
+            print("[Audio Extractor Node] Activated.")
             audio_path = state["audio_path"]
             if not audio_path:
                 return {"blueprint": None}
@@ -68,19 +67,19 @@ class ToneCrafterGraph:
 
 
         def crafter_node(state: GraphState):
-            print("🧠 [Nó: Setup Crafter] Acionado.")
+            print("[Setup Crafter Node] Activated.")
             if not state.get("blueprint"):
                 return {"patch": None}
             return {"patch": self.setup_crafter.craft_setup(state["blueprint"], self.rag_system)}
 
 
         def unified_responder_node(state: GraphState):
-            print("🗣️ [Nó: Respondedor Unificado] Formatando a resposta final...")
+            print("[Unified Responder Node] Formatting final response...")
             return self.responder_agent.generate_response(state)
         
 
         def guardrail_node(state: GraphState):
-            print("🛡️ [Nó: Guardrail Multimodal] Avaliando a segurança da requisição...")
+            print("[Guardrail Node] Checking request's intention...")
             return self.guardrail_worker.evaluate_request(state)
 
 
@@ -128,7 +127,12 @@ class ToneCrafterGraph:
         return workflow.compile(checkpointer=self.memory)
 
 
-    def process(self, text_input: str = "", audio_path: str = None, thread_id: str = "sessao_padrao") -> str:
+    def _process(
+        self,
+        text_input: str = "",
+        audio_path: str = None,
+        thread_id: str = "sessao_padrao"
+    ) -> str:
         is_audio = bool(audio_path)
         
         if is_audio and text_input:
@@ -151,7 +155,12 @@ class ToneCrafterGraph:
         return final_state["final_response"]
     
 
-    def process_stream(self, text_input: str = "", audio_path: str = None, thread_id: str = "sessao_padrao"):
+    def process_stream(
+        self,
+        text_input: str = "",
+        audio_path: str = None,
+        thread_id: str = "sessao_padrao"
+    ):
         is_audio = bool(audio_path)
         
         msg_content = f"[Arquivo de Áudio Anexado] {text_input}" if is_audio and text_input else "[Arquivo de Áudio Anexado] Gere um patch." if is_audio else text_input
@@ -187,6 +196,6 @@ class ToneCrafterGraph:
 
 if __name__ == "__main__":
     app = ToneCrafterGraph()
-    print(app.process("Timbre de Master of Puppets do Metallica", thread_id="teste_local"))
+    print(app._process("Timbre de Master of Puppets do Metallica", thread_id="teste_local"))
     print("-" * 50)
-    print(app.process("Mas eu queria apenas a distorção", thread_id="teste_local"))
+    print(app._process("Mas eu queria apenas a distorção", thread_id="teste_local"))

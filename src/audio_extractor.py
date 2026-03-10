@@ -20,7 +20,10 @@ class AudioExtractorAgent:
         self.structured_llm = self.llm.with_structured_output(ToneBlueprint)
 
 
-    def _encode_audio_to_base64(self, file_path: str) -> str:
+    def _encode_audio_to_base64(
+        self, 
+        file_path: str
+    ) -> str:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Arquivo de áudio não encontrado: {file_path}")
             
@@ -29,9 +32,11 @@ class AudioExtractorAgent:
             return base64.b64encode(audio_data).decode("utf-8")
 
 
-    def analyze_audio(self, audio_path: str, user_instructions: str = None) -> ToneBlueprint:
-        print(f"🎧 [Audio Extractor] Analisando o arquivo: {audio_path}...")
-        
+    def analyze_audio(
+        self,
+        audio_path: str,
+        user_instructions: str = None
+    ) -> ToneBlueprint:
         base64_audio = self._encode_audio_to_base64(audio_path)
         
         ext = audio_path.split('.')[-1].lower()
@@ -63,6 +68,5 @@ class AudioExtractorAgent:
             analysis_result = self.structured_llm.invoke([message])
             return analysis_result
         except Exception as e:
-            print(f"⚠️ Erro ao extrair áudio: {e}")
             raise e
 

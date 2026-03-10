@@ -10,11 +10,18 @@ from src.audio_extractor import AudioExtractorAgent
 
 class QAAgentWorker:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(model=settings.CONVERSATION_LLM_MODEL_NAME, temperature=0.1)
+        self.llm = ChatGoogleGenerativeAI(
+            model=settings.CONVERSATION_LLM_MODEL_NAME,
+            temperature=0.1
+        )
 
 
-    def process_qa(self, state: dict, rag_system: PedalboardRAG, audio_worker: AudioExtractorAgent) -> dict:
-        """Coleta dados brutos via RAG, Web Search ou análise de áudio."""
+    def process_qa(
+        self,
+        state: dict,
+        rag_system: PedalboardRAG,
+        audio_worker: AudioExtractorAgent
+    ) -> dict:
         @tool
         def buscar_manual(query: str) -> str:
             """
@@ -23,7 +30,10 @@ class QAAgentWorker:
             CERTO: 'Pitch Shifter', 'Noise Gate threshold', 'Tube Screamer distortion'.
             ERRADO: 'Como eu faço para mudar a afinação', 'Qual efeito simula o Tube Screamer'.
             """
-            return rag_system.search_effect_parameters(query=query, k=3)
+            return rag_system.search_effect_parameters(
+                query=query,
+                k=3
+            )
             
         tavily_tool = TavilySearch(
             max_results=3, 
@@ -42,7 +52,6 @@ class QAAgentWorker:
             @tool
             def ouvir_audio_anexado() -> str:
                 """Use esta ferramenta para escutar e analisar o arquivo de áudio que o usuário anexou."""
-                print("🎧 [QA Agent] Escutando o áudio em background...")
                 blueprint_extraido = audio_worker.analyze_audio(state["audio_path"])
                 return f"A análise do áudio revelou os seguintes prováveis equipamentos:\n{blueprint_extraido.model_dump_json()}"
             

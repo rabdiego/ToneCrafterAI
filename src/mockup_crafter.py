@@ -36,13 +36,13 @@ class MockupSetupCrafterAgent:
         
         self.chain = self.prompt | self.structured_llm
 
-    def craft_mockup(self, user_description: str) -> ToneBlueprint:
-        print(f"📝 [Mockup Crafter] Traduzindo pedido textual para receita genérica...")
-        
+    def craft_mockup(
+        self,
+        user_description: str
+    ) -> ToneBlueprint:
         try:
             result = self.chain.invoke({"user_description": user_description})
             return result
         except Exception as e:
-            print(f"⚠️ Erro ao processar o mockup: {e}")
             raise e
 

@@ -18,13 +18,16 @@ class PedalManualParser:
         )
 
 
-    def parse_and_save(self, input_pdf_path: str, output_md_path: str) -> str:
+    def parse_and_save(
+        self,
+        input_pdf_path: str,
+        output_md_path: str
+    ) -> str:
         print(f"Starting document extraction: {input_pdf_path}...")
         try:
             parsed_documents = self.parser.load_data(input_pdf_path)
             
             if not parsed_documents:
-                print("Warning: No content extracted from PDF.")
                 return ""
 
             full_markdown_content = "\n\n".join([doc.text for doc in parsed_documents])
@@ -32,11 +35,9 @@ class PedalManualParser:
             with open(output_md_path, "w", encoding="utf-8") as file:
                 file.write(full_markdown_content)
                 
-            print(f"Extraction was completed successfully and saved on: {output_md_path}")
             return full_markdown_content
 
         except Exception as e:
-            print(f"An error was ocurred uring parsing: {e}")
             return ""
 
 

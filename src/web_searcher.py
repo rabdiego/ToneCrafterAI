@@ -60,18 +60,14 @@ class WebSearcherAgent:
         self.formatter_chain = formatter_prompt | self.llm.with_structured_output(ToneBlueprint)
 
 
-    def search_and_craft(self, query: str) -> ToneBlueprint:
-        print(f"🌐 [Web Searcher] Vasculhando a web via Tavily para: '{query}'...")
+    def search_and_craft(
+        self,
+        query: str
+    ) -> ToneBlueprint:
         try:
             research_result = self.researcher_executor.invoke({"query": query})
             raw_research = research_result["output"]
-            
-            print(f"⚙️ [Web Searcher] Pesquisa concluída. Normalizando dados...")
-            
             blueprint = self.formatter_chain.invoke({"research_text": raw_research})
-            
-            print(f"✨ [Web Searcher] Enriquecendo o perfil acústico dos pedais encontrados...")
-            
             enricher = PedalEnricherAgent()
             
             for nome_campo, slot in blueprint:
@@ -95,6 +91,5 @@ class WebSearcherAgent:
             return blueprint
             
         except Exception as e:
-            print(f"⚠️ Erro ao pesquisar na web: {e}")
             raise e
 

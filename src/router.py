@@ -33,8 +33,10 @@ class SemanticRouterAgent:
         ])
 
 
-    def route_request(self, state: dict) -> dict:
-        """Processa o estado atual do grafo e toma a decisão de roteamento."""
+    def route_request(
+        self,
+        state: dict
+    ) -> dict:
         has_audio = bool(state.get("audio_path"))
         patch_atual = state.get("patch")
         user_text = state.get("user_input") or ""
@@ -60,11 +62,6 @@ class SemanticRouterAgent:
             route_str = decision.intent.value
             
         query_limpa = decision.contextualized_query
-        
-        print(f"🔄 Consulta Traduzida: '{query_limpa}'")
-        print(f"🔍 Busca Otimizada: '{decision.optimized_search_query}'")
-        print(f"🎛️ Instrução de Áudio: '{decision.audio_instructions}'")
-        print(f"🔀 Rota Decidida: [{route_str.upper()}]")
         
         return {
             "route": route_str, 

@@ -14,12 +14,14 @@ class GuardrailsAgent:
         ).with_structured_output(GuardrailDecision)
 
 
-    def evaluate_request(self, state: dict) -> dict:
+    def evaluate_request(
+        self,
+        state: dict
+    ) -> dict:
         user_text = state.get("user_input") or ""
         audio_path = state.get("audio_path")
         
         if user_text:
-            print("   -> Acionando Agente de Texto...")
             text_prompt = ChatPromptTemplate.from_messages([
                 ("system", """Você é a segurança do ToneCrafter AI. Avalie SOMENTE o texto do usuário.
                 PERMITIDO: Assuntos sobre música, pedais, amplificadores, bandas, DAWs ou saudações.
@@ -30,7 +32,6 @@ class GuardrailsAgent:
             text_decision = (text_prompt | self.guardrail_llm).invoke({"texto": user_text})
             
             if not text_decision.is_allowed:
-                print(f"🚫 [Bloqueio de Texto] {text_decision.block_message}")
                 return {
                     "route": "blocked", 
                     "final_response": text_decision.block_message,
@@ -38,7 +39,6 @@ class GuardrailsAgent:
                 }
 
         if audio_path:
-            print("   -> Acionando Agente de Áudio...")
             try:
                 with open(audio_path, "rb") as f:
                     audio_b64 = base64.b64encode(f.read()).decode("utf-8")
@@ -57,15 +57,13 @@ class GuardrailsAgent:
                 audio_decision = self.guardrail_llm.invoke(audio_prompt)
                 
                 if not audio_decision.is_allowed:
-                    print(f"🚫 [Bloqueio de Áudio] {audio_decision.block_message}")
                     return {
                         "route": "blocked", 
                         "final_response": audio_decision.block_message,
                         "messages": [AIMessage(content=audio_decision.block_message)]
                     }
             except Exception as e:
-                print(f"⚠️ Erro ao avaliar o áudio no guardrail: {e}")
+                pass
 
-        print("✅ [Guardrail] Requisição 100% segura. Liberando fluxo.")
         return {"route": "safe"}
 

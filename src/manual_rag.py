@@ -22,10 +22,12 @@ effects_dict = {
 }
 
 class PedalboardRAG:
-    def __init__(self, persist_directory: str = "chroma_db"):
+    def __init__(
+        self,
+        persist_directory: str = "chroma_db"
+    ):
         load_dotenv()
         
-        print("Loading local embeddings model (HuggingFace)...")
         self.embeddings_model = HuggingFaceEmbeddings(
             model_name=settings.EMBEDDINGS_MODEL,
             model_kwargs={'device':'cpu'}
@@ -41,7 +43,10 @@ class PedalboardRAG:
         )
 
     
-    async def _aparse_markdown_tables(self, markdown_text: str) -> list[Document]:
+    async def _aparse_markdown_tables(
+        self,
+        markdown_text: str
+    ) -> list[Document]:
         enricher = PedalEnricherAgent()
         extracted_items = []
         current_category = "Unknown_Category"
@@ -95,8 +100,6 @@ class PedalboardRAG:
                         "Effect": item['fx_title']
                     }
                 )
-
-        print(f"🚀 Iniciando enriquecimento assíncrono de {len(extracted_items)} efeitos...")
         
         tasks = [process_item(item) for item in extracted_items]
         documents = await asyncio.gather(*tasks)
@@ -104,8 +107,10 @@ class PedalboardRAG:
         return documents
 
 
-    async def aingest_markdown_manual(self, markdown_path: str) -> int:
-        print(f"Loading and unfolding tables from {markdown_path}...")
+    async def aingest_markdown_manual(
+        self,
+        markdown_path: str
+    ) -> int:
         
         with open(markdown_path, "r", encoding="utf-8") as f:
             markdown_document = f.read()
@@ -116,13 +121,16 @@ class PedalboardRAG:
             print("No individual effect found. Check file's structure.")
             return 0
 
-        print(f"💾 Ingesting {len(chunks)} individual effects into Vector Database...")
         self.vector_store.add_documents(documents=chunks)
         
         return len(chunks)
 
 
-    def search_effect_parameters(self, query: str, k: int = 5) -> str:
+    def search_effect_parameters(
+        self,
+        query: str,
+        k: int = 5
+    ) -> str:
         results = self.vector_store.similarity_search(query, k=k)
         if not results:
             return "No relevant information found in the manual on this effects."

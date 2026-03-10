@@ -20,8 +20,10 @@ class ResponderAgent:
         )
 
 
-    def generate_response(self, state: dict) -> dict:
-        """Lê o contexto injetado pelos outros agentes e formula a resposta final."""
+    def generate_response(
+        self,
+        state: dict
+    ) -> dict:
         route = state.get("route")
         
         blueprint_str = state["blueprint"].model_dump_json() if state.get("blueprint") else "N/A"
